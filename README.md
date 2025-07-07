@@ -1,4 +1,4 @@
-# Comprehensive Assessment of Rigid Poses (CARP) Dock
+# Comprehensive Assessment of Rigid Poses Docking (CARPdock)
 
 Can be used to quickly generate starting poses for [NISE](https://github.com/polizzilab/NISE).
 
@@ -47,6 +47,9 @@ Try increasing from 9.0 to 100.0 if not using helical bundles this will not have
 
 
 ### Suggested workflow:
+
+If you need a starting ligand conformer we would suggest generating a set of conformer candidates by clustering structures from crystallographic data in either the PDB or CSD (Cambridge Structural Database), 
+though a quick alternative is to use RDKit by running `./generate_initial_ligand_conformer.py`
 
 1. Generate starting poses for a target scaffold with CARPdock
 2. Generate 1-5 sequences for each CARPdock output using LASErMPNN

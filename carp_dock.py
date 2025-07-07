@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument('--no_write', action='store_true', help='Do not write output files')
     parser.add_argument('--max_batch_size', type=int, default=2000, help='Max batch size for GPU operations')
     parser.add_argument('--ligand_rotation_batch_size', type=int, default=20, help='Batch size for ligand rotations')
-    parser.add_argument('--search_box_padding', type=float, default=5.0, help='Padding for search box, if positive adds more volume to search, if negative removes volume.')
+    parser.add_argument('--search_box_padding', type=float, default=0.0, help='Padding for search box, if positive adds more volume to search, if negative removes volume.')
     parser.add_argument('--device', type=str, default='cuda:0', help='Torch device (e.g., "cuda:0" or "cpu")')
     parser.add_argument('--silent', action='store_true', help='Suppress non-error output')
     parser.add_argument('--alpha_hull_alpha', type=float, default=9.0, help='Alpha parameter for convex hull construction. Larger numbers generate more box-like hulls. Smaller numbers wrap the point cloud tighter. 9.0 is default for helical bundles. Folds with larger pockets may need larger values (~100.0)')
