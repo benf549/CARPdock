@@ -12,15 +12,21 @@ The script supports GPU acceleration with pytoch for computationally intensive s
 
 Most of this script was vibe-coded, though it was validated on some test targets. 
 Use at your own risk.
-
 ____
 
-usage:
+![An example output of all superimposed clusters from carp_dock.py](./images/example_carp_output.png)
+
+### `example_backbones` directory contains 40 optimized 4-helix bundles which should be capable of binding to a diverse set of drug-like ligands.
+
+Example (Generate protein-ligand starting poses similar to those used in [NISE paper](https://www.biorxiv.org/content/10.1101/2025.04.22.649862v1) ):
+
+Enforce that the charged amine nitrogen (N2) is exposed and various other atoms are buried.
 
 ```bash
-python carp_dock.py PATH_TO_ALL_GLY_PROTEIN_BACKBONE.pdb PATH_TO_PROTONATED_LIGAND.pdb ./path_to_output_dir/
+python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H.pdb ./example_ligands/exatecan.pdb ./debug/ --device cuda:0 --outside_hull N2 --inside_hull F,N3,O2,O3,C15,C21 --n_ligand_rotations 1000
 ```
 
+### `carp_dock.py` options.
 
 ```bash
 usage: carp_dock.py [-h] [--inside_hull INSIDE_HULL] [--outside_hull OUTSIDE_HULL] [--test_point_grid_width TEST_POINT_GRID_WIDTH] [--n_ligand_rotations N_LIGAND_ROTATIONS] [--clash_distance_tolerance CLASH_DISTANCE_TOLERANCE] [--no_write] [--max_batch_size MAX_BATCH_SIZE] [--ligand_rotation_batch_size LIGAND_ROTATION_BATCH_SIZE]
