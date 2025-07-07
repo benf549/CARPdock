@@ -14,7 +14,7 @@ Most of this script was vibe-coded, though it was validated on some test targets
 Use at your own risk.
 
 
-Please report any issues, bugs, or feature requests in the GitHub Issues tab.
+Please report any suggestions, issues, bugs, or feature requests in the GitHub Issues tab.
 ____
 
 ![An example output of all superimposed clusters from carp_dock.py](./images/example_carp_output.png)
@@ -38,6 +38,21 @@ ____
 python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H.pdb ./example_ligands/apx.pdb ./debug/ --device cuda:1 --n_ligand_rotations 1000 --outside_hull O1 --inside_hull O2,O3,O4,C1,C16
 ```
 ____
+
+### Debugging Suggestions:
+
+If it appears that certain regions of your input backbone are not being explored sufficiently check the value of the `alpha` parameter.
+Use the provided `visualize_hull.ipynb` notebook to check for gaps in the test points. 
+Try increasing from 9.0 to 100.0 if not using helical bundles this will not have much an effect on computational overhead.
+
+
+### Suggested workflow:
+
+1. Generate starting poses for a target scaffold with CARPdock
+2. Generate 1-5 sequences for each CARPdock output using LASErMPNN
+3. Predict structures with Boltz or AlphaFold3
+4. Use the highest confidence pose(s) produced by structure prediction as the input to NISE.
+
 
 ### `carp_dock.py` options.
 
