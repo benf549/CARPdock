@@ -18,13 +18,23 @@ ____
 
 ### `example_backbones` directory contains 40 optimized 4-helix bundles which should be capable of binding to a diverse set of drug-like ligands.
 
-Example (Generate protein-ligand starting poses similar to those used in [NISE paper](https://www.biorxiv.org/content/10.1101/2025.04.22.649862v1) ):
+____
+
+#### Example 1: Generate protein-ligand starting poses similar to those used in [Zero-shot design of drug-binding proteins via neural selection-expansion](https://www.biorxiv.org/content/10.1101/2025.04.22.649862v1) :
 
 Enforce that the charged amine nitrogen (N2) is exposed and various other atoms are buried.
 
 ```bash
 python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H.pdb ./example_ligands/exatecan.pdb ./debug/ --device cuda:0 --outside_hull N2 --inside_hull F,N3,O2,O3,C15,C21 --n_ligand_rotations 1000
 ```
+____
+
+#### Example 2: Generate starting pose similar to those used in []
+
+```bash
+python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H.pdb ./example_ligands/apx.pdb ./debug/ --device cuda:1 --n_ligand_rotations 1000 --outside_hull O1 --inside_hull O2,O3,O4,C1,C16
+```
+____
 
 ### `carp_dock.py` options.
 
