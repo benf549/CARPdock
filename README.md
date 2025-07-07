@@ -23,7 +23,7 @@ ____
 
 ____
 
-#### <u>Example 1:</u> Generate Exatecan poses similar to those used in [Zero-shot design of drug-binding proteins via neural selection-expansion](https://www.biorxiv.org/content/10.1101/2025.04.22.649862v1) :
+#### <u>Example 1:</u> Generate Exatecan poses similar to those used in [Zero-shot design of drug-binding proteins via neural selection-expansion](https://www.biorxiv.org/content/10.1101/2025.04.22.649862v1):
 
 Enforce that the charged amine nitrogen (N2) is exposed and various other atoms are buried.
 
@@ -32,7 +32,7 @@ python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H
 ```
 ____
 
-#### <u>Example 2:</u> Generate Apixaban poses similar to those used in [A defined structural unit enables de novo design of small-molecule–binding proteins](https://www.science.org/doi/10.1126/science.abb8330)
+#### <u>Example 2:</u> Generate Apixaban poses similar to those used in [A defined structural unit enables de novo design of small-molecule–binding proteins](https://www.science.org/doi/10.1126/science.abb8330):
 
 Enforce that the carboxamide oxygen (O1) is exposed and various other polar atoms are buried.
 
