@@ -1,8 +1,8 @@
-### Comprehensive Assessment of Rigid Poses (CARP) Dock
+# Comprehensive Assessment of Rigid Poses (CARP) Dock
 
 Can be used to quickly generate starting poses for [NISE](https://github.com/polizzilab/NISE).
 
-Runs with the [LASErMPNN](https://github.com/polizzilab/LASErMPNN) python environment.
+### Runs with the [LASErMPNN](https://github.com/polizzilab/LASErMPNN) python environment.
 
 This script performs rigid-body ligand docking onto a protein structure using brute-force sampling of ligand rotations and translations, followed by clustering of valid poses. 
 It loads protein and ligand structures, generates a grid of possible ligand positions, samples random ligand orientations, and filters out poses that clash with the protein or violate user-specified burial constraints. 
@@ -12,9 +12,6 @@ The script supports GPU acceleration with pytoch for computationally intensive s
 
 Most of this script was vibe-coded, though it was validated on some test targets. 
 Use at your own risk.
-
-
-bfry@g.harvard.edu
 
 ____
 
