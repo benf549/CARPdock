@@ -34,6 +34,8 @@ ____
 
 #### <u>Example 2:</u> Generate Apixaban poses similar to those used in [A defined structural unit enables de novo design of small-molecule–binding proteins](https://www.science.org/doi/10.1126/science.abb8330)
 
+Enforce that the carboxamide oxygen (O1) is exposed and various other polar atoms are buried.
+
 ```bash
 python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H.pdb ./example_ligands/apx.pdb ./debug/ --device cuda:1 --n_ligand_rotations 1000 --outside_hull O1 --inside_hull O2,O3,O4,C1,C16
 ```
