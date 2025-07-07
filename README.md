@@ -12,6 +12,9 @@ The script supports GPU acceleration with pytoch for computationally intensive s
 
 Most of this script was vibe-coded, though it was validated on some test targets. 
 Use at your own risk.
+
+
+Please report any issues, bugs, or feature requests in the GitHub Issues tab.
 ____
 
 ![An example output of all superimposed clusters from carp_dock.py](./images/example_carp_output.png)
