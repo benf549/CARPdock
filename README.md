@@ -2,16 +2,16 @@
 
 Can be used to quickly generate starting poses for [NISE](https://github.com/polizzilab/NISE).
 
-### Runs with the [LASErMPNN](https://github.com/polizzilab/LASErMPNN) python environment.
-
-This script performs rigid-body ligand docking onto a protein structure using brute-force sampling of ligand rotations and translations, followed by clustering of valid poses. 
+This script performs rigid-body ligand docking onto an all glycine protein backbone using brute-force sampling of ligand rotations and translations, followed by clustering of valid poses. 
 It loads protein and ligand structures, generates a grid of possible ligand positions, samples random ligand orientations, and filters out poses that clash with the protein or violate user-specified burial constraints. 
 Valid ligand poses are clustered in 6D pose space (translation and rotation), and representative structures from each cluster can be written to output files. 
-The script supports GPU acceleration with pytoch for computationally intensive steps and provides command-line options for customization.
-
+The script supports GPU acceleration with PyTorch for computationally intensive steps.
 
 Most of this script was vibe-coded, though it was validated on some test targets. 
+
 Use at your own risk.
+
+### Runs with the [LASErMPNN](https://github.com/polizzilab/LASErMPNN) python environment.
 
 
 Please report any suggestions, issues, bugs, or feature requests in the GitHub Issues tab.
@@ -39,13 +39,6 @@ python carp_dock.py ./example_backbones/n0_00074_looped_master_3_gly_0001_trim_H
 ```
 ____
 
-### Debugging Suggestions:
-
-If it appears that certain regions of your input backbone are not being explored sufficiently check the value of the `alpha` parameter.
-Use the provided `visualize_hull.ipynb` notebook to check for gaps in the test points. 
-Try increasing from 9.0 to 100.0 if not using helical bundles this will not have much an effect on computational overhead.
-
-
 ### Suggested workflow:
 
 If you need a starting ligand conformer we would suggest generating a set of conformer candidates by clustering structures from crystallographic data in either the PDB or CSD (Cambridge Structural Database), 
@@ -55,6 +48,13 @@ though a quick alternative is to use RDKit by running `./generate_initial_ligand
 2. Generate 1-5 sequences for each CARPdock output using LASErMPNN
 3. Predict structures with Boltz or AlphaFold3
 4. Use the highest confidence pose(s) produced by structure prediction as the input to NISE.
+
+
+### Debugging Suggestions:
+
+If it appears that certain regions of your input backbone are not being explored sufficiently check the value of the `alpha` parameter.
+Use the provided `visualize_hull.ipynb` notebook to check for gaps in the test points. 
+Try increasing from 9.0 to 100.0 if not using helical bundles this will not have much an effect on computational overhead.
 
 
 ### `carp_dock.py` options.
