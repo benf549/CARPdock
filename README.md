@@ -44,7 +44,8 @@ ____
 If you need a starting ligand conformer we would suggest generating a set of conformer candidates by clustering structures from crystallographic data in either the PDB or CSD (Cambridge Structural Database), 
 though a quick alternative is to use RDKit by running `./generate_initial_ligand_conformer.py`
 
-1. Generate starting poses for a target scaffold with CARPdock
+1. Generate starting poses for a target scaffold with CARPdock. 
+    I would suggest setting any charged polar atoms to be constrainted with --outside_hull as this can narrow the search space substantially.
 2. Generate 1-5 sequences for each CARPdock output using LASErMPNN
 3. Predict structures with Boltz or AlphaFold3
 4. Use the highest confidence pose(s) produced by structure prediction as the input to NISE.
