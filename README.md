@@ -7,7 +7,7 @@ It loads protein and ligand structures, generates a grid of possible ligand posi
 Valid ligand poses are clustered in 6D pose space (translation and rotation), and representative structures from each cluster can be written to output files. 
 The script supports GPU acceleration with PyTorch for computationally intensive steps.
 
-Most of this script was vibe-coded, though it was validated on some test targets. 
+Most of this script was vibe-coded, though it was validated (computationally) on some test targets. 
 
 Use at your own risk.
 
