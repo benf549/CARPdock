@@ -291,7 +291,7 @@ def main(
                     pr.writePDB(str(output_dir / f'cluster_{cluster_idx+1}_{idx}.pdb'), protein + ligand)
             else:
                 idx = kde_cluster_MAP_pose(pose_vectors[cluster_labels == label])
-                lig_coords_npy = filtered_rototranslations[idx].cpu().to(torch.float32).numpy()
+                lig_coords_npy = filtered_rototranslations[cluster_labels == label][idx].cpu().to(torch.float32).numpy()
                 ligand.setCoords(lig_coords_npy)
                 pr.writePDB(str(output_dir / f'cluster_{cluster_idx+1}_{idx}.pdb'), protein + ligand)
 
@@ -335,5 +335,8 @@ if __name__ == "__main__":
         device=torch.device(args.device),
         dtype=torch.float32,
         verbose=not args.silent,
-        alpha=args.alpha_hull_alpha
+        alpha=args.alpha_hull_alpha,
+        dbscan_eps=args.dbscan_eps,
+        kmeans_nclusters=args.kmeans_nclusters,
+        clustering_algorithm=args.clustering_algorithm,
     )
