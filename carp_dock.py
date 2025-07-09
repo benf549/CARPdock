@@ -25,7 +25,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy.spatial.transform import Rotation
 from utils.burial_calc import batch_compute_fast_ligand_burial_mask_gpu
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.neighbors import KernelDensity
 
 
@@ -46,6 +46,9 @@ def parse_args():
     parser.add_argument('--device', type=str, default='cuda:0', help='Torch device (e.g., "cuda:0" or "cpu")')
     parser.add_argument('--silent', action='store_true', help='Suppress non-error output')
     parser.add_argument('--alpha_hull_alpha', type=float, default=9.0, help='Alpha parameter for convex hull construction. Larger numbers generate more box-like hulls. Smaller numbers wrap the point cloud tighter. 9.0 is default for helical bundles. Folds with larger pockets may need larger values (~100.0)')
+    parser.add_argument('--dbscan_eps', type=float, default=1.0, help='Epsilon parameter for DBscan, a larger value should produce fewer clusters, a smaller value will produce more clusters.')
+    parser.add_argument('--kmeans_nclusters', type=int, default=10, help='Number of kmeans clusters to generate if using kmeans clustering')
+    parser.add_argument('--clustering_algorithm', type=str, default='dbscan', choices=['dbscan', 'kmeans'], help='Clustering algorithm to use: "dbscan" or "kmeans"')
     return parser.parse_args()
 
 
@@ -62,7 +65,7 @@ def random_sample_rotations(ligand_coords, n):
 
 
 def load_backbone_info(input_protein, device, dtype):
-    protein = pr.parsePDB(input_protein).select('not element H').copy()
+    protein = pr.parsePDB(str(input_protein)).select('not element H').copy()
 
     # Get the CA atoms and calculate the center of mass.
     protein_ca_coords = protein.ca.getCoords()
@@ -77,7 +80,7 @@ def load_backbone_info(input_protein, device, dtype):
 
 
 def load_ligand_info(input_ligand, device, dtype):
-    ligand = pr.parsePDB(input_ligand).copy()
+    ligand = pr.parsePDB(str(input_ligand)).copy()
     ligand_coords = ligand.getCoords()
     ligand_names = ligand.getNames()
 
@@ -190,7 +193,7 @@ def batched_rigid_alignment(new_xyzs, ref_xyz):
     return out
 
 
-def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords):
+def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, dbscan_eps, kmeans_nclusters, clustering_algorithm):
     # Pose_vectors is (B, 6): each row is [dx,dy,dz, rx,ry,rz]
     pose_vectors = batched_rigid_alignment(filtered_rototranslations, ligand_coords)
 
@@ -199,9 +202,16 @@ def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords):
     pose_vectors_scaled[:, :3] /= 1.0   # Maybe leave translations as-is...
     pose_vectors_scaled[:, 3: ] /= 0.5  # set 30 degrees in radians roughly equal to 1.0 A
 
-    # Try DBSCAN
-    clusterer = DBSCAN(eps=1.0, min_samples=2) # eps = max 6D distance for cluster. Tune this!
-    labels = clusterer.fit_predict(pose_vectors_scaled)
+    # Clustering: support both DBSCAN and KMeans
+    # By default, use DBSCAN. To use KMeans, set dbscan_eps to None and provide n_clusters.
+    if clustering_algorithm == 'dbscan':
+        clusterer = DBSCAN(eps=dbscan_eps, min_samples=2)
+        labels = clusterer.fit_predict(pose_vectors_scaled)
+    elif clustering_algorithm == 'kmeans':
+        clusterer = KMeans(n_clusters=kmeans_nclusters, random_state=0)
+        labels = clusterer.fit_predict(pose_vectors_scaled)
+    else:
+        raise ValueError(f'No clustering algorithm named {clustering_algorithm}')
 
     return labels, pose_vectors_scaled
 
@@ -223,7 +233,8 @@ def main(
     input_protein, input_ligand, output_dir, constraints, 
     test_point_grid_width = 0.5, n_ligand_rotations=1000, clash_distance_tolerance=2.5, no_write=False, 
     max_batch_size = 2000, ligand_rotation_batch_size = 20, search_box_padding = 0.0, device: torch.device = torch.device('cuda:0'), 
-    dtype: torch.dtype = torch.float32, verbose: bool = True, alpha: float = 9.0
+    dtype: torch.dtype = torch.float32, verbose: bool = True, alpha: float = 9.0, dbscan_eps: float = 1.0, 
+    kmeans_nclusters: int = 10, clustering_algorithm: str = 'dbscan'
 ):
     # Load starting coordinates/rigid conformers.
     protein, centered_coords, protein_ca_coords, protein_com = load_backbone_info(input_protein, device, dtype)
@@ -259,7 +270,7 @@ def main(
         cluster_labels = np.zeros(filtered_rototranslations.shape[0])
     else:
         # Cluster on translation and rotation relative to reference conformer.
-        cluster_labels, pose_vectors = cluster_filtered_rototranslations(filtered_rototranslations.cpu().to(torch.float32).numpy(), ligand_coords.cpu().to(torch.float32).numpy())
+        cluster_labels, pose_vectors = cluster_filtered_rototranslations(filtered_rototranslations.cpu().to(torch.float32).numpy(), ligand_coords.cpu().to(torch.float32).numpy(), dbscan_eps=dbscan_eps, kmeans_nclusters=kmeans_nclusters, clustering_algorithm=clustering_algorithm)
 
     unique_clusters = np.unique(cluster_labels)
     if verbose: print(f'Clustered rototranslations into {len(unique_clusters)} clusters.')
