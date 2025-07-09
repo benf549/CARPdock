@@ -200,7 +200,7 @@ def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, 
     # Optionally, rescale translation/rotation parts:
     pose_vectors_scaled = pose_vectors.copy()
     pose_vectors_scaled[:, :3] /= 1.0   # Maybe leave translations as-is...
-    pose_vectors_scaled[:, 3: ] /= 0.5  # set 30 degrees in radians roughly equal to 1.0 A
+    pose_vectors_scaled[:, 3:] /= 0.5  # set 30 degrees in radians roughly equal to 1.0 A
 
     # Clustering: support both DBSCAN and KMeans
     # By default, use DBSCAN. To use KMeans, set dbscan_eps to None and provide n_clusters.
