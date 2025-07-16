@@ -64,7 +64,7 @@ Try increasing from 9.0 to 100.0 if not using helical bundles this will not have
 
 ```bash
 usage: carp_dock.py [-h] [--inside_hull INSIDE_HULL] [--outside_hull OUTSIDE_HULL] [--test_point_grid_width TEST_POINT_GRID_WIDTH] [--n_ligand_rotations N_LIGAND_ROTATIONS] [--clash_distance_tolerance CLASH_DISTANCE_TOLERANCE] [--no_write] [--max_batch_size MAX_BATCH_SIZE] [--ligand_rotation_batch_size LIGAND_ROTATION_BATCH_SIZE]
-                    [--search_box_padding SEARCH_BOX_PADDING] [--device DEVICE] [--silent] [--alpha_hull_alpha ALPHA_HULL_ALPHA]
+                    [--search_box_padding SEARCH_BOX_PADDING] [--device DEVICE] [--silent] [--alpha_hull_alpha ALPHA_HULL_ALPHA] [--dbscan_eps DBSCAN_EPS] [--kmeans_nclusters KMEANS_NCLUSTERS] [--clustering_algorithm {dbscan,kmeans}]
                     input_protein input_ligand output_dir
 
 Rigid-body ligand docking with clustering.
@@ -97,4 +97,10 @@ options:
   --silent              Suppress non-error output
   --alpha_hull_alpha ALPHA_HULL_ALPHA
                         Alpha parameter for convex hull construction. Larger numbers generate more box-like hulls. Smaller numbers wrap the point cloud tighter. 9.0 is default for helical bundles. Folds with larger pockets may need larger values (~100.0)
+  --dbscan_eps DBSCAN_EPS
+                        Epsilon parameter for DBscan, a larger value should produce fewer clusters, a smaller value will produce more clusters.
+  --kmeans_nclusters KMEANS_NCLUSTERS
+                        Number of kmeans clusters to generate if using kmeans clustering
+  --clustering_algorithm {dbscan,kmeans}
+                        Clustering algorithm to use: "dbscan" or "kmeans"
 ```
