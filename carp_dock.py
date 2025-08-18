@@ -18,6 +18,7 @@ bfry@g.harvard.edu
 import json
 import argparse
 from pathlib import Path
+import multiprocessing as mp
 
 import torch
 import prody as pr
@@ -216,18 +217,46 @@ def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, 
     return labels, pose_vectors_scaled
 
 
-def kde_cluster_MAP_pose(X, bandwidth=0.5):
+def kde_cluster_timeout(X, bandwidth, timeout=10):
     """
     X is (N, D) array of (N) observed pose vectors in D dimensions
     Returns: index of X which is "most typical" pose according to the KDE
+    Uses multiprocessing for safe timeout.
     """
-    kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian')
-    kde.fit(X)
-    log_density = kde.score_samples(X)
 
-    # Pick pose with maximum density under KDE
-    return np.argmax(log_density)
+    def target(queue, X, bandwidth):
+        kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian', algorithm='kd_tree')
+        kde.fit(X)
+        log_density = kde.score_samples(X)
+        idx = np.argmax(log_density)
+        queue.put(idx)
 
+    queue = mp.Queue()
+    p = mp.Process(target=target, args=(queue, X, bandwidth))
+    p.start()
+    p.join(timeout)
+    if p.is_alive():
+        p.terminate()
+        p.join()
+        return None  # Timed out
+    if not queue.empty():
+        return queue.get()
+    return None
+
+
+def kde_cluster_MAP_pose(X, bandwidth=0.5):
+    orig_idxs = np.arange(X.shape[0])
+    while True:
+        idx = kde_cluster_timeout(X, bandwidth, timeout=10)
+        if idx is not None:
+            return orig_idxs[idx]
+        bandwidth *= 2
+        print(f'Identifying cluster centroid took too long, doubling KDE bandwidth to: {bandwidth}, {X.shape}')
+        if X.shape[0] > 2:
+            idxs = np.random.choice(X.shape[0], X.shape[0] // 2, replace=False)
+            X = X[idxs]
+            orig_idxs = orig_idxs[idxs]
+        
 
 def main(
     input_protein, input_ligand, output_dir, constraints, 
@@ -266,7 +295,7 @@ def main(
 
     if filtered_rototranslations.shape[0] == 0:
         return filtered_rototranslations, None
-    elif filtered_rototranslations.shape[0] < 25:
+    elif (filtered_rototranslations.shape[0] < 25) or (clustering_algorithm == 'kmeans' and filtered_rototranslations.shape[0] <= kmeans_nclusters):
         cluster_labels = np.zeros(filtered_rototranslations.shape[0])
     else:
         # Cluster on translation and rotation relative to reference conformer.
