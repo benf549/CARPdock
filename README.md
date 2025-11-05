@@ -1,3 +1,5 @@
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/benf549/CARPdock/blob/main/run_CARPdock.ipynb)
+
 # Comprehensive Assessment of Rigid Poses Docking (CARPdock)
 
 Can be used to quickly generate starting poses for [NISE](https://github.com/polizzilab/NISE).
