@@ -104,7 +104,7 @@ def compute_test_points(rotated_core_coords, device, max_batch_size, grid_width,
 
     if verbose: print(f'Computed {grid_points.shape[0]} initial test grid points')
 
-    mask = batch_compute_fast_ligand_burial_mask_gpu(rotated_core_coords, grid_points, num_rays=10, max_batch_size=max_batch_size, alpha=alpha)
+    mask = batch_compute_fast_ligand_burial_mask_gpu(rotated_core_coords, grid_points, num_rays=25, max_batch_size=max_batch_size, alpha=alpha)
     test_points = grid_points[mask]
 
     if verbose: print(f"Filtered to {test_points.shape[0]}, points")
@@ -285,7 +285,7 @@ def main(
     # compute masks tracking what atoms have constraints.
     ligand_in_hull_atoms_mask = torch.tensor([x in constraints['inside_hull'] for x in ligand_names]).bool().to(device)
     ligand_outside_hull_atoms_mask = torch.tensor([x in constraints['outside_hull'] for x in ligand_names]).bool().to(device)
-    ligand_burial_mask = batch_compute_fast_ligand_burial_mask_gpu(centered_ca_coords, roto_translations.reshape(-1, 3), num_rays=10, max_batch_size=max_batch_size, alpha=alpha)
+    ligand_burial_mask = batch_compute_fast_ligand_burial_mask_gpu(centered_ca_coords, roto_translations.reshape(-1, 3), num_rays=25, max_batch_size=max_batch_size, alpha=alpha)
     ligand_burial_mask = ligand_burial_mask.reshape(-1, len(ligand_names))
 
     # Filter out poses by burial constraints.
@@ -343,7 +343,7 @@ if __name__ == "__main__":
     }
 
     output_dir = Path(args.output_dir)
-    output_dir.mkdir(exist_ok=False)
+    output_dir.mkdir(exist_ok=False, parents=True)
 
     args_dict = vars(args)
     with open(output_dir / "input_args.json", "w") as f:
