@@ -11,8 +11,6 @@ The script supports GPU acceleration with PyTorch for computationally intensive 
 
 Most of this script was vibe-coded, though it was validated (computationally and experimentally for generating NISE starting points) on some test targets. 
 
-Use at your own risk.
-
 ### Runs with the [LASErMPNN](https://github.com/polizzilab/LASErMPNN) python environment.
 
 
