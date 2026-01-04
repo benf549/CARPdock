@@ -19,7 +19,7 @@ ____
 
 ![An example output of all superimposed clusters from carp_dock.py](./images/example_carp_output.png)
 
-### `example_backbones` directory contains 40 optimized 4-helix bundles which should be capable of binding to a diverse set of drug-like ligands.
+### `example_backbones` directory contains 40 optimized 4-helix bundles and `example_backbones_ntf2` contains 50 optimized NTF2 scaffolds which should be capable of binding to a diverse set of drug-like ligands.
 
 ____
 
