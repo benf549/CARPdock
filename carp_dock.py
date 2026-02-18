@@ -295,7 +295,7 @@ def main(
 
     if filtered_rototranslations.shape[0] == 0:
         return filtered_rototranslations, None
-    elif (filtered_rototranslations.shape[0] < 25) or (clustering_algorithm == 'kmeans' and filtered_rototranslations.shape[0] <= kmeans_nclusters):
+    elif (clustering_algorithm == 'kmeans' and filtered_rototranslations.shape[0] < kmeans_nclusters) or (clustering_algorithm != 'kmeans' and filtered_rototranslations.shape[0] < 25):
         cluster_labels = np.zeros(filtered_rototranslations.shape[0])
     else:
         # Cluster on translation and rotation relative to reference conformer.
