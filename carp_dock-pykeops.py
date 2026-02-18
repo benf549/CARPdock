@@ -15,18 +15,49 @@ Use at your own risk.
 bfry@g.harvard.edu
 """
 
+import os
+
+# Limit CPU usage for parallel processes through environment variables or just set it here.
+max_cores = None 
+if max_cores is None:
+    env_val = os.environ.get("MAX_CPU_CORES") or os.environ.get("MAX_NUM_CPUS")
+    if env_val:
+        try:
+            max_cores = int(env_val)
+        except Exception:
+            max_cores = None
+
+# Set max_cores to total CPU count if not specified
+if max_cores is None:
+    max_cores = os.cpu_count() or 1
+total = os.cpu_count() or 1
+max_cores = max(1, min(int(max_cores), total))
+print(f"Setting max CPU cores to: {max_cores} out of {total} available cores.")
+
+# Export common thread-limiting env vars for BLAS / OpenMP backends
+os.environ["OMP_NUM_THREADS"] = str(max_cores)
+os.environ["OPENBLAS_NUM_THREADS"] = str(max_cores)
+os.environ["MKL_NUM_THREADS"] = str(max_cores)
+os.environ["VECLIB_MAXIMUM_THREADS"] = str(max_cores)
+os.environ["NUMEXPR_NUM_THREADS"] = str(max_cores)
+
+# If PyTorch is available now, set its thread limits as well.
+import torch
+import numpy as np
+
+torch.set_num_threads(max_cores)
+torch.set_num_interop_threads(max_cores)
+
 import json
 import argparse
 from pathlib import Path
 import multiprocessing as mp
-
-import torch
 import prody as pr
-import numpy as np
+from pykeops.torch import LazyTensor
 from tqdm import tqdm
 from scipy.spatial.transform import Rotation
 from utils.burial_calc import batch_compute_fast_ligand_burial_mask_gpu
-from sklearn.cluster import DBSCAN, KMeans
+from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 
 
@@ -194,7 +225,72 @@ def batched_rigid_alignment(new_xyzs, ref_xyz):
     return out
 
 
-def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, dbscan_eps, kmeans_nclusters, clustering_algorithm):
+def kmeans_torch_keops(X, n_clusters, n_iters=100, tol=1e-4, device=None):
+    """
+    K-means clustering using PyKeOps (GPU-accelerated pairwise distances).
+
+    Parameters
+    ----------
+    X : torch.Tensor, shape (N, D)
+        Data on device.
+    n_clusters : int
+    n_iters : int
+    tol : float
+        Stopping criterion on center shift.
+    device : torch.device or None
+
+    Returns
+    -------
+    labels : np.ndarray, shape (N,)
+        Cluster assignment for each point.
+    """
+    if device is None:
+        device = X.device
+    X = X.to(device)
+    N, D = X.shape
+
+    if n_clusters > N:
+        raise ValueError(f"n_clusters ({n_clusters}) > number of samples ({N})")
+
+    # Random subset initialization (you could implement k-means++ if desired)
+    indices = torch.randperm(N, device=device)[:n_clusters]
+    centers = X[indices].clone()  # (K, D)
+
+    # Reshape for KeOps
+    # X_i: (N, 1, D), centers_j: (1, K, D)
+    X_i = LazyTensor(X.view(N, 1, D))      # i = data points
+    for it in range(n_iters):
+        K = centers.shape[0]
+        C_j = LazyTensor(centers.view(1, K, D))  # j = centers
+
+        # Squared distances: (N, K)
+        D_ij = ((X_i - C_j) ** 2).sum(-1)
+
+        # Assign to nearest center
+        labels = D_ij.argmin(dim=1).view(-1)  # (N,)
+
+        # Update centers using standard PyTorch (no need for KeOps here)
+        new_centers = torch.zeros_like(centers)
+        counts = torch.bincount(labels, minlength=n_clusters).float().unsqueeze(1)  # (K, 1)
+
+        for k in range(n_clusters):
+            mask = (labels == k)
+            if mask.any():
+                new_centers[k] = X[mask].mean(dim=0)
+            else:
+                # Reinitialize an empty cluster to a random point
+                new_centers[k] = X[torch.randint(0, N, (1,), device=device)]
+
+        shift = torch.norm(centers - new_centers)
+        centers = new_centers
+
+        if shift < tol:
+            break
+
+    return labels.cpu().numpy()
+
+
+def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, dbscan_eps, kmeans_nclusters, clustering_algorithm, device=None):
     # Pose_vectors is (B, 6): each row is [dx,dy,dz, rx,ry,rz]
     pose_vectors = batched_rigid_alignment(filtered_rototranslations, ligand_coords)
 
@@ -209,8 +305,8 @@ def cluster_filtered_rototranslations(filtered_rototranslations, ligand_coords, 
         clusterer = DBSCAN(eps=dbscan_eps, min_samples=2)
         labels = clusterer.fit_predict(pose_vectors_scaled)
     elif clustering_algorithm == 'kmeans':
-        clusterer = KMeans(n_clusters=kmeans_nclusters, random_state=0)
-        labels = clusterer.fit_predict(pose_vectors_scaled)
+        X_torch = torch.from_numpy(pose_vectors_scaled).to(device if device is not None else 'cpu', dtype=torch.float32)
+        labels = kmeans_torch_keops(X_torch, n_clusters=kmeans_nclusters, device=device if device is not None else 'cpu')
     else:
         raise ValueError(f'No clustering algorithm named {clustering_algorithm}')
 
@@ -299,7 +395,10 @@ def main(
         cluster_labels = np.zeros(filtered_rototranslations.shape[0])
     else:
         # Cluster on translation and rotation relative to reference conformer.
-        cluster_labels, pose_vectors = cluster_filtered_rototranslations(filtered_rototranslations.cpu().to(torch.float32).numpy(), ligand_coords.cpu().to(torch.float32).numpy(), dbscan_eps=dbscan_eps, kmeans_nclusters=kmeans_nclusters, clustering_algorithm=clustering_algorithm)
+        cluster_labels, pose_vectors = cluster_filtered_rototranslations(
+            filtered_rototranslations.cpu().to(torch.float32).numpy(), ligand_coords.cpu().to(torch.float32).numpy(), 
+            dbscan_eps=dbscan_eps, kmeans_nclusters=kmeans_nclusters, clustering_algorithm=clustering_algorithm, device=device
+        )
 
     unique_clusters = np.unique(cluster_labels)
     if verbose: print(f'Clustered rototranslations into {len(unique_clusters)} clusters.')
